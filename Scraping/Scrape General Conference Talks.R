@@ -5,6 +5,8 @@ library(dplyr)
 
 # Storage
 genCon73_79 <- list()
+failed_links <- list()  # Track failures
+
 
 for(year in 1973:1979) {
   for(month in c("04", "10")) {
@@ -28,6 +30,9 @@ for(year in 1973:1979) {
     # STAGE 2: Scrape each talk
     for(i in seq_along(talk_links)) {
       link <- talk_links[i]
+      
+      tryCatch({
+        
       talk_page <- read_html(link)
       
       # Extract metadata
@@ -66,7 +71,21 @@ for(year in 1973:1979) {
       
       cat("  Scraped:", title, "\n")
       
+      }, error = function(e) {
+        # Log the failure and continue
+        cat("  ✗ FAILED:", link, "\n")
+        cat("    Error:", conditionMessage(e), "\n")
+        failed_links[[length(failed_links) + 1]] <- list(
+          url = link,
+          year = year,
+          month = month,
+          index = i,
+          error = conditionMessage(e)
+        )
+      })
+      
       Sys.sleep(round(runif(1, min=2, max=10), 0))
+      
     }
   }
 }
@@ -76,6 +95,8 @@ talks_df <- bind_rows(genCon73_79, .id = "talk_id")
 
 # Save the results
 saveRDS(talks_df, here::here("Data", "general_conference_1973_1979.rds"))
+saveRDS(failed_links, here::here("Data", "failed_1973_1979.rds"))
+
 write.csv(talks_df, here::here("Data", "general_conference_1973_1979.csv"), row.names = FALSE)
 
 
