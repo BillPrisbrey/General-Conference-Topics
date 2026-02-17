@@ -1,17 +1,15 @@
 # Scrape General Conference Talks
 
 library(rvest)
-library(dplyr)
 
-# Storage
-genCon73_79 <- list()
-failed_links <- list()  # Track failures
+# Storage for raw HTML
+all_html <- list()
+failed_links <- list()
 
-
-for(year in 1973:1979) {
+for(year in 1980:1989) {
   for(month in c("04", "10")) {
     
-    # STAGE 1: Get conference index page
+    # Get conference index page
     conf_url <- paste0("https://www.churchofjesuschrist.org/study/general-conference/",
                        year, "/", month, "?lang=eng")
     conf_page <- read_html(conf_url)
@@ -27,52 +25,25 @@ for(year in 1973:1979) {
     
     Sys.sleep(round(runif(1, min=2, max=10), 0))
     
-    # STAGE 2: Scrape each talk
+    # Scrape each talk's HTML
     for(i in seq_along(talk_links)) {
       link <- talk_links[i]
       
       tryCatch({
+        talk_page <- read_html(link)
         
-      talk_page <- read_html(link)
-      
-      # Extract metadata
-      title <- talk_page |> html_element("h1[id^='title']") |> html_text2()
-      speaker <- talk_page |> html_element("p.author-name") |> html_text2()
-      office <- talk_page |> html_element("p.author-role") |> html_text2()
-      session_info <- talk_page |> html_element("p.kicker") |> html_text2()
-      
-      # Extract all talk text paragraphs (includes inline citations)
-      talk_text <- talk_page |>
-        html_elements("p[data-aid]") |>
-        html_text2() |>
-        paste(collapse = "\n\n")
-      
-      # Extract scripture references
-      scripture_refs <- talk_page |>
-        html_elements("a.scripture-ref") |>
-        html_text2() |>
-        paste(collapse = "; ")
-      
-      # Store everything
-      talk_data <- list(
-        url = link,
-        year = year,
-        month = month,
-        title = title,
-        speaker = speaker,
-        office = office,
-        session_info = session_info,
-        talk_text = talk_text,
-        scripture_refs = scripture_refs
-      )
-      
-      talk_name <- paste0(year, "_", month, "_", sprintf("%02d", i))
-      genCon73_79[[talk_name]] <- talk_data
-      
-      cat("  Scraped:", title, "\n")
-      
+        # Store the raw HTML object
+        talk_name <- paste0(year, "_", month, "_", sprintf("%02d", i))
+        all_html[[talk_name]] <- list(
+          url = link,
+          year = year,
+          month = month,
+          html = talk_page  # Save the entire HTML object
+        )
+        
+        cat("  ✓ Downloaded:", link, "\n")
+        
       }, error = function(e) {
-        # Log the failure and continue
         cat("  ✗ FAILED:", link, "\n")
         cat("    Error:", conditionMessage(e), "\n")
         failed_links[[length(failed_links) + 1]] <- list(
@@ -85,18 +56,17 @@ for(year in 1973:1979) {
       })
       
       Sys.sleep(round(runif(1, min=2, max=10), 0))
-      
     }
   }
 }
 
-# Convert to data frame
-talks_df <- bind_rows(genCon73_79, .id = "talk_id")
+# Save the raw HTML
+saveRDS(all_html, here::here("Data", "Raw HTML", "raw_html_1980s.rds"))
 
-# Save the results
-saveRDS(talks_df, here::here("Data", "general_conference_1973_1979.rds"))
-saveRDS(failed_links, here::here("Data", "failed_1973_1979.rds"))
-
-write.csv(talks_df, here::here("Data", "general_conference_1973_1979.csv"), row.names = FALSE)
-
-
+# Save failed links
+if(length(failed_links) > 0) {
+  failed_df <- bind_rows(failed_links)
+  write.csv(failed_df, 
+            here::here("Data", "Raw HTML", "failed_links_1980s.csv"), 
+            row.names = FALSE)
+}
