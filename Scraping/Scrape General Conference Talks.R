@@ -6,7 +6,7 @@ library(rvest)
 all_html <- list()
 failed_links <- list()
 
-for(year in 1980:1989) {
+for(year in 1970:1979) {
   for(month in c("04", "10")) {
     
     # Get conference index page
@@ -61,12 +61,12 @@ for(year in 1980:1989) {
 }
 
 # Save the raw HTML
-saveRDS(all_html, here::here("Data", "Raw HTML", "raw_html_1980s.rds"))
+saveRDS(all_html, here::here("Data", "Raw HTML", "raw_html_1970s.rds"))
 
 # Save failed links
 if(length(failed_links) > 0) {
   failed_df <- bind_rows(failed_links)
   write.csv(failed_df, 
-            here::here("Data", "Raw HTML", "failed_links_1980s.csv"), 
+            here::here("Data", "Raw HTML", "failed_links_1970s.csv"), 
             row.names = FALSE)
 }
