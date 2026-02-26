@@ -6,7 +6,7 @@ library(rvest)
 all_html <- list()
 failed_links <- list()
 
-for(year in 1970:1979) {
+for(year in 1971:1979) {
   for(month in c("04", "10")) {
     
     # Get conference index page
