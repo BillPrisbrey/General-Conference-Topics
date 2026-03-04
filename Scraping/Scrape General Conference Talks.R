@@ -2,12 +2,16 @@
 
 library(rvest)
 
+years_scraped <- 1978:1979
+
 # Storage for raw HTML
 all_html <- list()
 failed_links <- list()
 
-for(year in 1977:1977) {
-  for(month in c("04")) { # , "10"
+for(year in years_scraped) {
+  for(month in c("04", "10")) { 
+    
+    GenCon <- list()
     
     # Get conference index page
     conf_url <- paste0("https://www.churchofjesuschrist.org/study/general-conference/",
@@ -23,7 +27,7 @@ for(year in 1977:1977) {
     
     cat("Found", length(talk_links), "talks for", year, "-", month, "\n")
     
-    Sys.sleep(round(runif(1, min=2, max=10), 0))
+    # Sys.sleep(round(runif(1, min=2, max=10), 0))
     
     # Scrape each talk's HTML
     for(i in seq_along(talk_links)) {
@@ -33,8 +37,9 @@ for(year in 1977:1977) {
         talk_page <- read_html(link)
         
         # Store the raw HTML object
-        talk_name <- paste0(year, "_", month, "_", sprintf("%02d", i))
-        all_html[[talk_name]] <- list(
+        talk_index <- paste0(year, "_", month, "_", sprintf("%02d", i))
+      #  all_html[[talk_index]] <- list(
+         GenCon[[talk_index]] <- list(
           url = link,
           year = year,
           month = month,
@@ -42,6 +47,9 @@ for(year in 1977:1977) {
         )
         
         cat("  ✓ Downloaded:", link, "\n")
+        
+        # Save one session at a time
+        
         
       }, error = function(e) {
         cat("  ✗ FAILED:", link, "\n")
@@ -57,11 +65,17 @@ for(year in 1977:1977) {
       
       Sys.sleep(round(runif(1, min=2, max=10), 0))
     }
+    
+    # Save each conference
+    saveRDS(GenCon, here::here("Data", "Raw HTML", paste("GenCon_", year, "_",month,".rds", sep = "")))
+    
   }
+  
+  
 }
 
 # Save the raw HTML
-saveRDS(all_html, here::here("Data", "Raw HTML", "raw_html_1977.rds"))
+# saveRDS(all_html, here::here("Data", "Raw HTML", "raw_html_1977.rds"))
 
 # Save failed links
 if(length(failed_links) > 0) {
