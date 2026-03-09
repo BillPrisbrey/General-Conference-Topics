@@ -81,6 +81,6 @@ for(year in years_scraped) {
 if(length(failed_links) > 0) {
   failed_df <- bind_rows(failed_links)
   write.csv(failed_df, 
-            here::here("Data", "Raw HTML", "failed_links_1977.csv"), 
+            here::here("Data", "Raw HTML", paste("failed_links_", mean(years_scraped), ".csv") ), 
             row.names = FALSE)
 }
