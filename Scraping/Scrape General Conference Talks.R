@@ -2,7 +2,7 @@
 
 library(rvest)
 
-years_scraped <- 1978:1979
+years_scraped <- c(1978,1988,1998,2008,2018)  # 1978:1979
 
 # Storage for raw HTML
 all_html <- list()
